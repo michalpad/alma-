@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>אלמה - מורה למתמטיקה</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  body { margin:0; font-family:'Varela Round','Segoe UI',system-ui,sans-serif; background:#F3EEE0; }
+  #root { min-height:100vh; }
+  * { box-sizing:border-box; }
+  button { font-family:inherit; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useCallback } = React;
+
+const C = {
+  cream:"#F3EEE0",cloud:"#FDFBF5",white:"#FFFFFF",ink:"#4A4A42",inkSoft:"#8A8576",
+  green:"#7CA67C",greenDeep:"#5E8A60",blue:"#7BA4C4",blueDeep:"#5E89AD",
+  rose:"#B5687A",gold:"#E8C25C",goldDeep:"#D4A93E",mint:"#B5EAD7",sky:"#A8D8EA",lav:"#C7CEEA",
+};
+
+const btnStyle=(bg,dis)=>({background:dis?C.inkSoft:bg,color:"#fff",border:"none",borderRadius:16,padding:"14px 32px",fontSize:17,fontWeight:700,cursor:dis?"default":"pointer",boxShadow:"0 6px 16px rgba(74,74,66,0.18)"});
+
+// ============ תוכן לכל כיתה: הקנייה + תרגול ============
+const CONTENT = {
+  "א": {
+    teach: [
+      { say:"בואו נלמד לספור. הנה שלושה עיגולים.", draw:{t:"arr",rows:1,cols:3} },
+      { say:"נוסיף עוד שניים. נספור יחד: אחת, שתיים, שלוש, ארבע, חמש.", draw:{t:"arr",rows:1,cols:5} },
+      { say:"חמישה! שלוש ועוד שתיים שווה חמש.", draw:{t:"txt",c:"3 + 2 = 5"} },
+    ],
+    quiz: [
+      { q:"כמה זה 2 + 3?", opts:["5","4","6"], a:"5" },
+      { q:"כמה זה 4 + 1?", opts:["5","3","6"], a:"5" },
+      { q:"איזה מספר בא אחרי 6?", opts:["7","5","8"], a:"7" },
+    ],
+  },
+  "ב": {
+    teach: [
+      { say:"נחשוב על חיבור כמו קפיצות על שביל. נתחיל משלוש.", draw:{t:"line",mark:3} },
+      { say:"נקפוץ ארבעה צעדים קדימה. חיבור תמיד מגדיל.", draw:{t:"line",mark:7,from:3} },
+      { say:"הגענו לשבע. שלוש ועוד ארבע שווה שבע.", draw:{t:"txt",c:"3 + 4 = 7"} },
+    ],
+    quiz: [
+      { q:"כמה זה 5 + 4?", opts:["9","8","10"], a:"9" },
+      { q:"כמה זה 7 + 6?", opts:["13","12","14"], a:"13" },
+      { q:"כמה זה 8 + 5?", opts:["13","12","14"], a:"13" },
+    ],
+  },
+  "ג": {
+    teach: [
+      { say:"בואו נחשוב מה זה כפל. נבנה שלוש שורות של עיגולים.", draw:{t:"arr",rows:3,cols:4} },
+      { say:"בכל שורה ארבעה. כל השורות שוות. כפל הוא קיצור דרך לחיבור!", draw:{t:"arr",rows:3,cols:4} },
+      { say:"שלוש כפול ארבע שווה שתים עשרה. הבנו גם למה!", draw:{t:"txt",c:"3 × 4 = 12"} },
+    ],
+    quiz: [
+      { q:"כמה זה 3 × 4?", opts:["12","10","14"], a:"12" },
+      { q:"כמה זה 5 × 2?", opts:["10","7","12"], a:"10" },
+      { q:"כמה זה 6 × 3?", opts:["18","15","21"], a:"18" },
+    ],
+  },
+  "ד": {
+    teach: [
+      { say:"נחתוך עוגה לארבעה חלקים שווים.", draw:{t:"frac",num:0,den:4} },
+      { say:"נצבע חלק אחד מארבעה. זה רבע.", draw:{t:"frac",num:1,den:4} },
+      { say:"ארבעה חברים חולקים פיצה. כל אחד מקבל רבע.", draw:{t:"txt",c:"1/4"} },
+    ],
+    quiz: [
+      { q:"לכמה חלקים חותכים כדי לקבל רבעים?", opts:["4","2","3"], a:"4" },
+      { q:"כמה רבעים יש בשלם?", opts:["4","2","3"], a:"4" },
+      { q:"שני רבעים שווים ל...?", opts:["חצי","שלם","רבע"], a:"חצי" },
+    ],
+  },
+  "ה": {
+    teach: [
+      { say:"הנה רשת של מאה משבצות. כל משבצת היא אחוז אחד.", draw:{t:"pct",p:0} },
+      { say:"נצבע עשרים וחמש. זה בדיוק רבע מהרשת!", draw:{t:"pct",p:25} },
+      { say:"חמישים אחוז זה חצי. הנחה של חמישים אחוז זה חצי מהמחיר.", draw:{t:"pct",p:50} },
+    ],
+    quiz: [
+      { q:"כמה זה 50% מתוך 100?", opts:["50","25","75"], a:"50" },
+      { q:"25% זה איזה חלק?", opts:["רבע","חצי","שלם"], a:"רבע" },
+      { q:"כמה זה 10% מתוך 100?", opts:["10","20","5"], a:"10" },
+    ],
+  },
+  "ו": {
+    teach: [
+      { say:"נבין מה זה יחס. על כל שני בנים יש שלוש בנות.", draw:{t:"ratio",a:2,b:3} },
+      { say:"אם נכפיל, ארבעה בנים ושש בנות, היחס נשמר.", draw:{t:"ratio",a:4,b:6} },
+      { say:"פוגשים יחס במתכון: שתי כוסות קמח על כוס סוכר.", draw:{t:"txt",c:"2 : 3"} },
+    ],
+    quiz: [
+      { q:"היחס 2:3 שווה ערך ל...?", opts:["4:6","2:4","3:2"], a:"4:6" },
+      { q:"כמה זה 1/3 מתוך 12?", opts:["4","3","6"], a:"4" },
+      { q:"היחס 1:2 שווה ערך ל...?", opts:["3:6","2:2","1:3"], a:"3:6" },
+    ],
+  },
+};
+
+// שאלות אבחון קצרות (זיהוי רמה)
+const DIAGNOSIS = [
+  { q:"כמה זה 2 + 3?", opts:["5","4","6"], a:"5", level:1 },
+  { q:"כמה זה 7 + 6?", opts:["13","12","14"], a:"13", level:2 },
+  { q:"כמה זה 4 × 3?", opts:["12","10","7"], a:"12", level:3 },
+  { q:"כמה רבעים בשלם?", opts:["4","2","3"], a:"4", level:4 },
+  { q:"כמה זה 50% מ-100?", opts:["50","25","10"], a:"50", level:5 },
+];
+
+// ============ ציור ============
+function sv(inner,w,h){return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;max-width:320px">'+inner+'</svg>';}
+function draw(d,rev){
+  if(!d)return"";
+  if(d.t==="txt")return sv('<text x="150" y="70" font-size="38" font-weight="700" fill="'+C.ink+'" text-anchor="middle" opacity="'+rev+'">'+d.c+'</text>',300,120);
+  if(d.t==="frac"){let o="",cx=150,cy=88,r=62;if(d.den===1)o='<circle cx="150" cy="88" r="62" fill="'+(d.num>0?C.mint:C.white)+'" stroke="'+C.ink+'" stroke-width="2"/>';else for(let i=0;i<d.den;i++){const a0=(i/d.den)*2*Math.PI-Math.PI/2,a1=((i+1)/d.den)*2*Math.PI-Math.PI/2,x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1),lg=(a1-a0)>Math.PI?1:0;o+='<path d="M '+cx+' '+cy+' L '+x0+' '+y0+' A '+r+' '+r+' 0 '+lg+' 1 '+x1+' '+y1+' Z" fill="'+(i<d.num?C.mint:C.white)+'" stroke="'+C.ink+'" stroke-width="2"/>';}return sv(o,300,180);}
+  if(d.t==="arr"){let o="",n=Math.round(d.rows*d.cols*rev),c=0;for(let r=0;r<d.rows;r++)for(let col=0;col<d.cols;col++){if(c<n)o+='<circle cx="'+(40+col*55)+'" cy="'+(40+r*55)+'" r="20" fill="'+C.sky+'" stroke="'+C.ink+'" stroke-width="2"/>';c++;}return sv(o,d.cols*55+30,d.rows*55+30);}
+  if(d.t==="pct"){let o="",f=Math.round(d.p*rev);for(let i=0;i<100;i++){const r=Math.floor(i/10),col=i%10;o+='<rect x="'+(col*22+1)+'" y="'+(r*22+1)+'" width="20" height="20" fill="'+(i<f?C.mint:C.white)+'" stroke="'+C.lav+'" stroke-width="1"/>';}o+='<text x="248" y="118" font-size="28" font-weight="700" fill="'+C.ink+'">'+f+'%</text>';return sv(o,300,228);}
+  if(d.t==="line"){let o='<line x1="20" y1="55" x2="280" y2="55" stroke="'+C.inkSoft+'" stroke-width="2"/>';for(let i=0;i<=10;i++){o+='<line x1="'+(20+i*26)+'" y1="50" x2="'+(20+i*26)+'" y2="60" stroke="'+C.inkSoft+'" stroke-width="2"/><text x="'+(20+i*26)+'" y="80" font-size="12" fill="'+C.inkSoft+'" text-anchor="middle">'+i+'</text>';}if(d.from!==undefined){const x0=20+d.from*26,x1=20+d.mark*26;o+='<path d="M '+x0+' 55 Q '+((x0+x1)/2)+' 12 '+x1+' 55" fill="none" stroke="'+C.green+'" stroke-width="3" opacity="'+rev+'"/>';}o+='<circle cx="'+(20+d.mark*26)+'" cy="55" r="9" fill="'+C.rose+'" stroke="'+C.ink+'" stroke-width="2" opacity="'+rev+'"/>';return sv(o,300,100);}
+  if(d.t==="ratio"){let o="",r=15;for(let i=0;i<d.a;i++)o+='<circle cx="'+(30+i*38)+'" cy="40" r="'+r+'" fill="'+C.sky+'" stroke="'+C.ink+'" stroke-width="2" opacity="'+rev+'"/>';for(let i=0;i<d.b;i++)o+='<circle cx="'+(30+d.a*38+30+i*38)+'" cy="40" r="'+r+'" fill="'+C.gold+'" stroke="'+C.ink+'" stroke-width="2" opacity="'+rev+'"/>';o+='<text x="'+((d.a+d.b)*38/2+30)+'" y="88" font-size="20" font-weight="700" fill="'+C.ink+'" text-anchor="middle">'+d.a+' : '+d.b+'</text>';return sv(o,(d.a+d.b)*38+70,108);}
+  return"";
+}
+function speak(text){return new Promise((res)=>{if(!window.speechSynthesis){setTimeout(res,1400);return;}try{const u=new SpeechSynthesisUtterance(text);const vs=window.speechSynthesis.getVoices()||[];const he=vs.find(v=>v.lang&&v.lang.toLowerCase().indexOf("he")===0);if(he)u.voice=he;u.lang="he-IL";u.rate=0.9;u.onend=res;u.onerror=res;window.speechSynthesis.speak(u);}catch(e){setTimeout(res,1400);}});}
+
+function App(){
+  const [screen,setScreen]=useState("welcome");
+  const [grade,setGrade]=useState(null);
+  const [diagIdx,setDiagIdx]=useState(0);
+  const [diagScore,setDiagScore]=useState(0);
+  const [step,setStep]=useState(0);
+  const [reveal,setReveal]=useState(1);
+  const [playing,setPlaying]=useState(false);
+  const [quizIdx,setQuizIdx]=useState(0);
+  const [quizCorrect,setQuizCorrect]=useState(0);
+  const [feedback,setFeedback]=useState(null);
+  const [done,setDone]=useState({});
+  const cancelRef=useRef(false);
+
+  const playTeach=useCallback(async(steps)=>{
+    cancelRef.current=false; setPlaying(true);
+    for(let i=0;i<steps.length;i++){
+      if(cancelRef.current)break;
+      setStep(i); setReveal(0);
+      const est=Math.max(1400,Math.min(steps[i].say.length/13*1000,6000));
+      for(let f=1;f<=20;f++){if(cancelRef.current)break;setReveal(f/20);await new Promise(r=>setTimeout(r,est/40));}
+      await speak(steps[i].say);
+      await new Promise(r=>setTimeout(r,400));
+    }
+    setPlaying(false);
+  },[]);
+
+  // ----- מסך פתיחה -----
+  if(screen==="welcome") return (
+    <div style={{maxWidth:480,margin:"0 auto",padding:24,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+      <div style={{fontSize:64,marginBottom:16}}>🎓</div>
+      <h1 style={{fontSize:40,color:C.ink,margin:"0 0 8px"}}>אלמה</h1>
+      <p style={{fontSize:18,color:C.inkSoft,margin:"0 0 40px",lineHeight:1.6}}>המורה הפרטית שלך למתמטיקה<br/>קודם נכיר, ואז נלמד יחד</p>
+      <button onClick={()=>setScreen("diag")} style={btnStyle("linear-gradient(135deg,"+C.green+","+C.blue+")")}>בואו נתחיל!</button>
+    </div>
+  );
+
+  // ----- אבחון ראשוני -----
+  if(screen==="diag"){
+    const item=DIAGNOSIS[diagIdx];
+    return (
+      <div style={{maxWidth:480,margin:"0 auto",padding:24,minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center"}}>
+        <div style={{textAlign:"center",marginBottom:8}}>
+          <span style={{fontSize:14,color:C.blue,fontWeight:700}}>שלב ההיכרות · שאלה {diagIdx+1} מתוך {DIAGNOSIS.length}</span>
+        </div>
+        <h2 style={{fontSize:22,color:C.ink,textAlign:"center",margin:"0 0 8px"}}>בוא נראה מה אתה כבר יודע</h2>
+        <p style={{fontSize:13,color:C.inkSoft,textAlign:"center",margin:"0 0 28px"}}>אין נכון או לא נכון — רק רוצים להכיר אותך</p>
+        <div style={{background:C.white,borderRadius:20,padding:28,boxShadow:"0 8px 24px rgba(74,74,66,0.12)"}}>
+          <p style={{fontSize:24,color:C.ink,textAlign:"center",fontWeight:700,margin:"0 0 24px"}}>{item.q}</p>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {item.opts.map(o=>(
+              <button key={o} onClick={()=>{
+                const correct=o===item.a;
+                const ns=diagScore+(correct?1:0);
+                if(diagIdx+1<DIAGNOSIS.length){setDiagScore(ns);setDiagIdx(diagIdx+1);}
+                else{const lvl=Math.max(1,Math.min(6,ns+1));setGrade(String.fromCharCode(1487+lvl));setScreen("map");}
+              }} style={{background:C.cloud,color:C.ink,border:"2px solid "+C.blue,borderRadius:14,padding:"14px",fontSize:19,fontWeight:700,cursor:"pointer"}}>{o}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ----- מפת התקדמות -----
+  if(screen==="map"){
+    const grades=Object.keys(CONTENT);
+    return (
+      <div style={{maxWidth:480,margin:"0 auto",padding:24,minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center"}}>
+        <h2 style={{fontSize:24,color:C.ink,textAlign:"center",margin:"0 0 6px"}}>מפת הלמידה שלי</h2>
+        <p style={{fontSize:14,color:C.inkSoft,textAlign:"center",margin:"0 0 28px"}}>התאמנו לך רמת פתיחה — כיתה {grade}. קדימה!</p>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {grades.map(g=>{
+            const isDone=done[g];
+            const isCurrent=g===grade;
+            return (
+              <button key={g} onClick={()=>{setGrade(g);setStep(0);setReveal(1);setScreen("teach");}}
+                style={{background:isDone?C.mint:C.white,color:C.ink,border:"2px solid "+(isCurrent?C.gold:C.green),borderRadius:16,padding:"16px 20px",fontSize:17,fontWeight:700,cursor:"pointer",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:isCurrent?"0 4px 14px rgba(232,194,92,0.4)":"0 3px 10px rgba(74,74,66,0.1)"}}>
+                <span>כיתה {g}</span>
+                <span style={{fontSize:22}}>{isDone?"🥇":(isCurrent?"⭐":"○")}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ----- הוראה (הלוח החי) -----
+  if(screen==="teach"){
+    const steps=CONTENT[grade].teach;
+    return (
+      <div style={{maxWidth:520,margin:"0 auto",padding:20,minHeight:"100vh"}}>
+        <button onClick={()=>{cancelRef.current=true;setPlaying(false);setScreen("map");}} style={{background:"none",border:"none",color:C.inkSoft,fontSize:15,cursor:"pointer",marginBottom:8}}>← למפה</button>
+        <div style={{textAlign:"center",marginBottom:12}}>
+          <span style={{fontSize:13,color:C.blue,fontWeight:700}}>שלב ההוראה · כיתה {grade}</span>
+        </div>
+        <div style={{background:C.white,borderRadius:20,padding:24,minHeight:240,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 24px rgba(74,74,66,0.12)"}}
+             dangerouslySetInnerHTML={{__html:draw(steps[step].draw,reveal)}} />
+        <div style={{background:C.cloud,borderRadius:16,padding:"16px 20px",marginTop:14,minHeight:54,display:"flex",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+          <p style={{fontSize:17,color:C.ink,margin:0,lineHeight:1.5}}>{steps[step].say}</p>
+        </div>
+        <div style={{textAlign:"center",marginTop:18,display:"flex",gap:10,justifyContent:"center"}}>
+          <button onClick={()=>playTeach(steps)} disabled={playing} style={btnStyle(C.green,playing)}>{playing?"אלמה מלמדת...":"▶ הסבר"}</button>
+          <button onClick={()=>{cancelRef.current=true;setPlaying(false);setQuizIdx(0);setQuizCorrect(0);setFeedback(null);setScreen("quiz");}} style={btnStyle(C.blue)}>לתרגול ←</button>
+        </div>
+      </div>
+    );
+  }
+
+  // ----- תרגול -----
+  if(screen==="quiz"){
+    const quiz=CONTENT[grade].quiz;
+    const item=quiz[quizIdx];
+    return (
+      <div style={{maxWidth:480,margin:"0 auto",padding:24,minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center"}}>
+        <div style={{textAlign:"center",marginBottom:8}}>
+          <span style={{fontSize:14,color:C.rose,fontWeight:700}}>תרגול · שאלה {quizIdx+1} מתוך {quiz.length}</span>
+        </div>
+        <div style={{background:C.white,borderRadius:20,padding:28,boxShadow:"0 8px 24px rgba(74,74,66,0.12)"}}>
+          <p style={{fontSize:24,color:C.ink,textAlign:"center",fontWeight:700,margin:"0 0 24px"}}>{item.q}</p>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {item.opts.map(o=>(
+              <button key={o} disabled={feedback!==null} onClick={()=>{
+                const correct=o===item.a;
+                setFeedback(correct?"correct":"wrong");
+                if(correct)setQuizCorrect(quizCorrect+1);
+                setTimeout(()=>{
+                  setFeedback(null);
+                  if(quizIdx+1<quiz.length)setQuizIdx(quizIdx+1);
+                  else{
+                    const finalCorrect=quizCorrect+(correct?1:0);
+                    if(finalCorrect>=Math.ceil(quiz.length*0.9)||finalCorrect===quiz.length)setDone(d=>({...d,[grade]:true}));
+                    else setDone(d=>({...d,[grade]:finalCorrect>=quiz.length-1}));
+                    setScreen("result");
+                    window._lastScore=finalCorrect;
+                  }
+                },1100);
+              }} style={{background:feedback&&o===item.a?C.mint:C.cloud,color:C.ink,border:"2px solid "+(feedback&&o===item.a?C.green:C.rose),borderRadius:14,padding:"14px",fontSize:19,fontWeight:700,cursor:feedback?"default":"pointer"}}>{o}</button>
+            ))}
+          </div>
+          {feedback&&<p style={{textAlign:"center",fontSize:18,fontWeight:700,marginTop:18,color:feedback==="correct"?C.greenDeep:C.rose}}>{feedback==="correct"?"מצוין! ✓":"לא נורא, ננסה שוב בפעם הבאה"}</p>}
+        </div>
+      </div>
+    );
+  }
+
+  // ----- תוצאה -----
+  if(screen==="result"){
+    const quiz=CONTENT[grade].quiz;
+    const score=window._lastScore||0;
+    const passed=score>=Math.ceil(quiz.length*0.9)||score===quiz.length;
+    return (
+      <div style={{maxWidth:480,margin:"0 auto",padding:24,minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+        <div style={{fontSize:64,marginBottom:16}}>{passed?"🥇":"💪"}</div>
+        <h2 style={{fontSize:28,color:C.ink,margin:"0 0 10px"}}>{passed?"כל הכבוד!":"עבודה יפה!"}</h2>
+        <p style={{fontSize:18,color:C.inkSoft,margin:"0 0 8px"}}>ענית נכון על {score} מתוך {quiz.length}</p>
+        <p style={{fontSize:15,color:C.inkSoft,margin:"0 0 36px",lineHeight:1.6}}>{passed?"שלטת בנושא! קיבלת מדליית זהב.":"עוד קצת תרגול ותשלוט בזה לגמרי."}</p>
+        <button onClick={()=>setScreen("map")} style={btnStyle("linear-gradient(135deg,"+C.green+","+C.blue+")")}>חזרה למפה</button>
+      </div>
+    );
+  }
+
+  return null;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
